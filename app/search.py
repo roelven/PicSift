@@ -1,6 +1,8 @@
 import os
-from elasticsearch import Elasticsearch, NotFoundError, RequestError, ConnectionError
 import time
+
+from elasticsearch import Elasticsearch, NotFoundError, RequestError, ConnectionError
+
 
 class SearchError(Exception):
     pass
