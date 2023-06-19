@@ -1,4 +1,7 @@
+.env
+*.pyc
 .DS_Store
+.venv
 es-data/
 mongo-data/
 picsift-data/
