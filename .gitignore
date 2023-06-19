@@ -1,4 +1,4 @@
 .DS_Store
-./es-data
-./mongo-data
-./picsift-data
+es-data/
+mongo-data/
+picsift-data/
