@@ -1,7 +1,15 @@
 import os
-from b2sdk.v1 import InMemoryAccountInfo
-from b2sdk.v1 import B2Api, B2ApplicationKeyCredentials
+import boto3
+from botocore.exceptions import BotoCoreError, ClientError, NoCredentialsError
 from apscheduler.schedulers.background import BackgroundScheduler
+
+# Set AWS credentials
+AWS_ACCESS_KEY = os.getenv('AWS_ACCESS_KEY')
+AWS_SECRET_KEY = os.getenv('AWS_SECRET_KEY')
+AWS_BUCKET_NAME = os.getenv('AWS_BUCKET_NAME')
+
+# Initialize S3 client
+s3_client = boto3.client('s3', aws_access_key_id=AWS_ACCESS_KEY, aws_secret_access_key=AWS_SECRET_KEY)
 
 class StorageError(Exception):
     pass
@@ -18,7 +26,7 @@ class B2Storage:
         b2_api.authorize_account('production', app_key_cred)
         self.bucket = b2_api.get_bucket_by_name(self.bucket_name)
 
-    def upload_file(self, file_path, file_name):
+    def upload_image(self, file_path, file_name):
         try:
             file_info = {'how': 'good-file'}
             self.bucket.upload_local_file(
@@ -29,7 +37,7 @@ class B2Storage:
         except Exception as e:
             raise StorageError(f"Could not upload file: {str(e)}")
 
-    def delete_file(self, file_name):
+    def delete_image(self, file_name):
         try:
             file_version = self.bucket.get_file_version_info_by_name(file_name)
             self.bucket.delete_file_version(file_version.id_, file_version.file_name)
@@ -37,7 +45,7 @@ class B2Storage:
             raise StorageError(f"Could not delete file: {str(e)}")
 
 def cleanup_temp_files():
-    folder = '/path/to/temp/files'
+    folder = '/tmp'
     for filename in os.listdir(folder):
         file_path = os.path.join(folder, filename)
         # If the file is more than an hour old, delete it

@@ -1,9 +1,10 @@
-from flask import request, jsonify, abort
+from flask import Flask, request, jsonify, abort
 from services import create_screenshot, process_screenshot, ProcessingError
 from ocr import process_image
 from database import update_screenshot, save_screenshot, get_screenshots, get_screenshot, DatabaseError
-from storage import upload_image, delete_image
+from storage import upload_image, delete_image, StorageError
 
+app = Flask(__name__)
 
 @app.route('/screenshots', methods=['GET'])
 def list_screenshots():
@@ -49,7 +50,7 @@ def post_screenshot():
         text = process_image(file)
 
         # Upload the image to the cloud storage
-        url = upload_image(file)
+        url = B2Storage.upload_image(file)
 
         # Create a new screenshot in the database
         screenshot = create_screenshot(file.filename, text, url)
@@ -71,7 +72,8 @@ def update_screenshot(id):
 
     try:
         # Update the screenshot in the database
-        screenshot = update_screenshot(id, metadata)
+        # we won't support updating the file in cloud storage for now.
+        screenshot = db_client.update_screenshot(id, metadata)
 
         if screenshot is None:
             # If no screenshot was found with the given ID, return a 404 error
@@ -95,7 +97,7 @@ def delete_screenshot(id):
             return jsonify(error='Not Found'), 404
 
         # Delete the image from the cloud storage
-        delete_image(screenshot['url'])
+        B2Storage.delete_image(screenshot['url'])
 
         # Delete the screenshot from the database
         delete_screenshot(id)
@@ -105,3 +107,6 @@ def delete_screenshot(id):
 
     # Return a success message
     return jsonify(message='Screenshot deleted')
+
+if __name__ == "__main__":
+    app.run(debug=True)  # or set debug=False in production

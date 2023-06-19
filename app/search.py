@@ -1,6 +1,5 @@
 import os
 import time
-
 from elasticsearch import Elasticsearch, NotFoundError, RequestError, ConnectionError
 
 
@@ -36,7 +35,7 @@ class ElasticsearchClient:
         except RequestError as e:
             raise SearchError(f"Unable to create index: {str(e)}")
 
-    def index_document(self, index_name, doc_id, document):
+    def index_screenshot(self, index_name, doc_id, document):
         try:
             response = self.es.index(index=index_name, id=doc_id, body=document)
             return response
@@ -57,7 +56,7 @@ class ElasticsearchClient:
         except RequestError as e:
             raise SearchError(f"Search error: {str(e)}")
 
-    def delete_document(self, index_name, doc_id):
+    def delete_screenshot(self, index_name, doc_id):
         try:
             self.es.delete(index=index_name, id=doc_id)
         except NotFoundError:

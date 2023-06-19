@@ -15,7 +15,7 @@ class DatabaseClient:
         self.db = self.client[self.db_name]
         self.collection = self.db[self.collection_name]
 
-    def create_screenshot(self, screenshot_data):
+    def save_screenshot(self, screenshot_data):
         try:
             result = self.collection.insert_one(screenshot_data)
             return result.inserted_id
