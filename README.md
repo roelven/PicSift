@@ -1,8 +1,7 @@
-[![Contributors][contributors-shield]][contributors-url]
-[![Forks][forks-shield]][forks-url]
-[![Stargazers][stars-shield]][stars-url]
-[![Issues][issues-shield]][issues-url]
-[![AGPL License][license-shield]][license-url]
+[![GitHub forks](https://img.shields.io/github/forks/roelven/PicSift.svg?style=social&label=Fork&maxAge=2592000)](https://GitHub.com/roelven/PicSift/network/)
+[![GitHub pull-requests](https://img.shields.io/github/issues-pr/roelven/PicSift.svg)](https://github.com/roelven/PicSift/pull/)
+[![GitHub license](https://img.shields.io/github/license/roelven/PicSift.svg)](https://github.com/roelven/PicSift/blob/master/LICENSE)
+[![GitHub watchers](https://img.shields.io/github/watchers/roelven/PicSift.svg?style=social&label=Watch&maxAge=2592000)](https://github.com/roelven/PicSift/watchers/)
 
 # PicSift: Your Screenshots Found and Shared with Ease.
 
