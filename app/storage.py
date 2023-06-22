@@ -7,6 +7,7 @@ from apscheduler.schedulers.background import BackgroundScheduler
 AWS_ACCESS_KEY = os.getenv('AWS_ACCESS_KEY')
 AWS_SECRET_KEY = os.getenv('AWS_SECRET_KEY')
 AWS_BUCKET_NAME = os.getenv('AWS_BUCKET_NAME')
+AWS_REGION = os.getenv('AWS_REGION')
 
 # Initialize S3 client
 s3_client = boto3.client('s3', aws_access_key_id=AWS_ACCESS_KEY, aws_secret_access_key=AWS_SECRET_KEY)
@@ -14,35 +15,23 @@ s3_client = boto3.client('s3', aws_access_key_id=AWS_ACCESS_KEY, aws_secret_acce
 class StorageError(Exception):
     pass
 
-class B2Storage:
-    def __init__(self):
-        application_key_id = os.getenv("B2_KEY_ID")
-        application_key = os.getenv("B2_APPLICATION_KEY")
-        self.bucket_name = os.getenv("B2_BUCKET_NAME")
+def upload_image(image_path, bucket_name):
+    s3 = boto3.client('s3')
 
-        info = InMemoryAccountInfo()
-        b2_api = B2Api(info)
-        app_key_cred = B2ApplicationKeyCredentials(application_key_id, application_key)
-        b2_api.authorize_account('production', app_key_cred)
-        self.bucket = b2_api.get_bucket_by_name(self.bucket_name)
+    try:
+        with open(image_path, 'rb') as data:
+            s3.upload_fileobj(data, bucket_name, os.path.basename(image_path))
+    except (NoCredentialsError, BotoCoreError, ClientError) as e:
+        raise StorageError(f"Could not upload image to S3: {str(e)}")
 
-    def upload_image(self, file_path, file_name):
-        try:
-            file_info = {'how': 'good-file'}
-            self.bucket.upload_local_file(
-                local_file=file_path,
-                file_name=file_name,
-                file_infos=file_info,
-            )
-        except Exception as e:
-            raise StorageError(f"Could not upload file: {str(e)}")
+def delete_image(image_name, bucket_name):
+    s3 = boto3.client('s3')
 
-    def delete_image(self, file_name):
-        try:
-            file_version = self.bucket.get_file_version_info_by_name(file_name)
-            self.bucket.delete_file_version(file_version.id_, file_version.file_name)
-        except Exception as e:
-            raise StorageError(f"Could not delete file: {str(e)}")
+    try:
+        s3.delete_object(Bucket=bucket_name, Key=image_name)
+    except (NoCredentialsError, BotoCoreError, ClientError) as e:
+        raise StorageError(f"Could not delete image from S3: {str(e)}")
+
 
 def cleanup_temp_files():
     folder = '/tmp'

@@ -1,7 +1,8 @@
 version: '3.7'
+
 services:
-  picsift:
-    build: ./app
+  picsift-api:
+    build: ./
     ports:
       - "5000:5000"
     volumes:
