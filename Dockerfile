@@ -14,14 +14,14 @@ COPY app/requirements.txt /app/requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Install Tesseract
-RUN apt-get update \
-    && apt-get install -y \
-    tesseract-ocr \
-    tesseract-ocr-eng \
-    tesseract-ocr-deu \
-    tesseract-ocr-nld \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
+# RUN apt-get update \
+#    && apt-get install -y \
+#    tesseract-ocr \
+#    tesseract-ocr-eng \
+#    tesseract-ocr-deu \
+#    tesseract-ocr-nld \
+#    && apt-get clean \
+#    && rm -rf /var/lib/apt/lists/*
 
 # Copy the rest of the code into the Docker container. Note that this happens
 # after the installation of dependencies, which means Docker can use its cache
