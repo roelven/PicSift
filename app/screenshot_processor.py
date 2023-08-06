@@ -1,17 +1,36 @@
 import pytesseract
 from PIL import Image
+from datetime import datetime
 from storage_manager import StorageManager
+from database_manager import DatabaseManager
+from search_engine import SearchEngine
 import os
 import asyncio
 
-class ScreenshotProcessor:
-    def __init__(self):
-        self.storage_manager = StorageManager()
 
-    def process_screenshot(self, image_path):
+class ScreenshotProcessor:
+    def __init__(self, db_manager, search_engine):
+        self.storage_manager = StorageManager()
+        self.db_manager = db_manager
+        self.search_engine = search_engine
+
+    def process_and_store(self, image_path):
         text = self.perform_ocr(image_path)
         image_url = self.upload_image(image_path)
         
+        # image metadata
+        image_data = {
+            'image_url': image_url,
+            'text': text,
+            'filename': os.path.basename(image_path),
+            'timestamp': datetime.now().isoformat(),
+            'filesize': os.path.getsize(image_path)  # in bytes
+        }
+
+        # Store the metadata to Elasticsearch and MongoDB
+        self.search_engine.index_image(image_data)
+        self.db_manager.store_image_metadata(image_data)
+
         # Clean up local file in async way
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)

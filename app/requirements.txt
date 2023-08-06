@@ -1,9 +1,9 @@
 Flask==2.0.1
 python-dotenv==0.19.0
 pytesseract==0.3.8
-Pillow==8.3.2
+Pillow==10.0
 pymongo==3.12.0
 elasticsearch==7.13.4
 boto3==1.28.20
 Flask-HTTPAuth==4.4.0
-Flask-Paginate==1.0.3
+Flask-Paginate==2022.1.8

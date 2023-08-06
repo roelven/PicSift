@@ -1,81 +1,73 @@
-from flask import Flask, request, jsonify, g
-from werkzeug.security import check_password_hash
-from screenshot_processor import ScreenshotProcessor
+from flask import Flask, request
 from database_manager import DatabaseManager
-from search_manager import SearchManager
+from screenshot_processor import ScreenshotProcessor
+from search_engine import SearchEngine
+from storage_manager import StorageManager
 from flask_httpauth import HTTPBasicAuth
-from dotenv import load_dotenv
+from werkzeug.utils import secure_filename
+from werkzeug.security import generate_password_hash, check_password_hash
 import os
+
+# Initialize database manager and search engine
+db_manager = DatabaseManager()
+search_engine = SearchEngine()
 
 app = Flask(__name__)
 auth = HTTPBasicAuth()
-load_dotenv()
 
-screenshot_processor = ScreenshotProcessor()
-database_manager = DatabaseManager()
-search_manager = SearchManager()
+users = {
+    os.getenv("USERNAME"): generate_password_hash(os.getenv("PASSWORD"))
+}
 
 @auth.verify_password
 def verify_password(username, password):
-    if username == 'admin' and check_password_hash(os.getenv('USER_ADMIN'), password):
+    if username in users and check_password_hash(users.get(username), password):
         return username
 
 @app.route('/upload', methods=['POST'])
 @auth.login_required
-def upload_file():
-    if 'file' not in request.files:
-        return jsonify({'message': 'No file part in the request'}), 400
-
-    file = request.files['file']
-    
-    if file.filename == '':
-        return jsonify({'message': 'No selected file'}), 400
-    
-    if not allowed_file(file.filename):
-        return jsonify({'message': 'File type not supported'}), 400
-
-    image_path = os.path.join('/tmp/', file.filename)
-    
+def upload():
     try:
-        file.save(image_path)
+        file = request.files['image']
+        if file:
+            # Create the 'tmp' directory if it doesn't exist
+            os.makedirs('tmp', exist_ok=True)
+
+            # Define a unique file name and save the file temporarily
+            image_path = os.path.join('tmp', secure_filename(file.filename))
+            file.save(image_path)
+            
+            # Process and store the image
+            screenshot_processor = ScreenshotProcessor(db_manager, search_engine)
+            screenshot_processor.process_and_store(image_path)
+
+            return {'message': 'Image processed and stored.'}, 200
+        else:
+            return {'error': 'No image file in request.'}, 400
     except Exception as e:
-        return jsonify({'message': f'File could not be saved. Error: {str(e)}'}), 500
-
-    image_url, text = screenshot_processor.process_screenshot(image_path)
-    metadata = database_manager.insert_image_data(file.filename, image_url, text)
-    search_manager.index_document(metadata)
-
-    return jsonify({'message': 'File uploaded and processed', 'data': metadata}), 201
-
-@app.route('/delete/<string:image_id>', methods=['DELETE'])
-@auth.login_required
-def delete_image(image_id):
-    try:
-        metadata = database_manager.get_image_data(image_id)
-        if metadata is None:
-            return jsonify({'message': 'No image found with the provided ID'}), 404
-
-        database_manager.delete_image_data(image_id)
-        search_manager.delete_document(image_id)
-        screenshot_processor.storage_manager.delete(metadata['image_url'])
-
-        return jsonify({'message': 'Image deleted successfully'}), 200
-    except Exception as e:
-        return jsonify({'message': f'Could not delete image. Error: {str(e)}'}), 500
+        return {'error': str(e)}, 400
 
 @app.route('/search', methods=['GET'])
 @auth.login_required
 def search():
-    search_term = request.args.get('q', None)
-    if not search_term:
-        return jsonify({'message': 'Search term not provided'}), 400
+    search_query = request.args.get('q')
+    search_engine = SearchEngine()
+    results = search_engine.search_images(search_query)
+    return {'results': results}, 200
 
-    results = search_manager.search_documents(search_term)
-    return jsonify({'message': 'Search results', 'data': results}), 200
+@app.route('/delete/<image_id>', methods=['DELETE'])
+@auth.login_required
+def delete(image_id):
+    try:
+        db_manager = DatabaseManager()
+        db_manager.delete_image(image_id)
+        storage_manager = StorageManager()
+        storage_manager.delete(image_id)
+        search_engine = SearchEngine()
+        search_engine.delete_image(image_id)
+        return {'message': 'Image and related data have been deleted.'}, 200
+    except Exception as e:
+        return {'error': str(e)}, 400
 
-def allowed_file(filename):
-    ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
-
-if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=5000, debug=False)
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5000)

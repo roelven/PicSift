@@ -4,11 +4,13 @@ class SearchEngine:
     def __init__(self):
         self.es = Elasticsearch([{'host': 'localhost', 'port': 9200}])
 
-    def index_image(self, image_id, image_data):
+    def index_image(self, image_data):
         try:
-            self.es.index(index="screenshots", id=image_id, body=image_data)
+            res = self.es.index(index="screenshots", body=image_data)
+            return res['result']
         except Exception as e:
-            print('Error while indexing image:', e)
+            print('Error while indexing:', e)
+            return None
 
     def search_images(self, query_text):
         try:
