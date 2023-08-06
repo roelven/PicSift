@@ -11,6 +11,7 @@ WORKDIR /app
 # as small as possible, while the `-r requirements.txt` option installs the 
 # required packages as specified in the requirements.txt file.
 COPY ./app/requirements.txt /app/requirements.txt
+RUN pip install --upgrade pip
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Install Tesseract
