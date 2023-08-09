@@ -9,8 +9,8 @@ from werkzeug.security import generate_password_hash, check_password_hash
 import os
 
 # Initialize database manager and search engine
-db_manager = DatabaseManager()
 search_engine = SearchEngine()
+db_manager = DatabaseManager()
 
 app = Flask(__name__)
 auth = HTTPBasicAuth()

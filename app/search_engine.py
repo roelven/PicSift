@@ -1,8 +1,11 @@
-from elasticsearch import Elasticsearch, NotFoundError
+from elasticsearch import Elasticsearch
+import os
 
 class SearchEngine:
     def __init__(self):
-        self.es = Elasticsearch([{'host': 'localhost', 'port': 9200}])
+        host = os.getenv('ES_URI')
+        port = os.getenv('ES_PORT')
+        self.es = Elasticsearch([f'http://{host}:{port}'])
 
     def index_image(self, image_data):
         try:
