@@ -8,12 +8,15 @@ from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
 import os
 
-# Initialize database manager and search engine
-search_engine = SearchEngine()
-db_manager = DatabaseManager()
-
+print(" 👉 Flask app starting ...")
 app = Flask(__name__)
 auth = HTTPBasicAuth()
+
+# Initialize database manager and search engine
+print(" 👉 Initializing SearchEngine ...")
+search_engine = SearchEngine()
+print(" 👉 DatabaseManager ...")
+db_manager = DatabaseManager()
 
 users = {
     os.getenv("USERNAME"): generate_password_hash(os.getenv("PASSWORD"))
@@ -70,4 +73,4 @@ def delete(image_id):
         return {'error': str(e)}, 400
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
+    app.run(debug=True, host='0.0.0.0', port=5000)

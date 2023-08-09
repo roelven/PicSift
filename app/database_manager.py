@@ -5,9 +5,19 @@ import time
 
 class DatabaseManager:
     def __init__(self):
-        self.client = MongoClient(os.getenv('MONGODB_URI'), serverSelectionTimeoutMS = 5000)
+        mongo_host = os.getenv('MONGODB_URI')
+        print(f'   ⏳ Initializing MongoDB client to connect to {mongo_host}... ')
+        self.client = MongoClient({mongo_host}, serverSelectionTimeoutMS = 5000)
         self.db = self.client['picsift_db']
         self.collection = self.db['screenshots']
+
+        # Verify MongoDB connection
+        try:
+            # The ismaster command is cheap and does not require auth.
+            self.client.admin.command('ismaster')
+            print("   ⏳ Connected to MongoDB successfully! ")
+        except Exception as e:
+            raise ValueError("   ⚠️ Failed to connect to MongoDB:", e)        
 
     def store_image_metadata(self, image_data):
         try:

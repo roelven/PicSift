@@ -1,4 +1,4 @@
-from elasticsearch import Elasticsearch
+from elasticsearch import Elasticsearch, ConnectionError, NotFoundError, TransportError
 import os
 
 class SearchEngine:
@@ -7,11 +7,23 @@ class SearchEngine:
         port = os.getenv('ES_PORT')
         self.es = Elasticsearch([f'http://{host}:{port}'])
 
+        print(f'   ⏳ Initializing ES client to connect to http://{host}:{port}...')
+
+        if not self.es.ping():
+            raise ValueError("   ⚠️ Elasticsearch is not reachable at the provided URI and port. ")
+
+        # Check Elasticsearch health
+        health = self.es.cluster.health()
+        if health['status'] in ['yellow', 'green']:
+            print("   ⏳ Connected to Elasticsearch successfully!")
+        else:
+            print("   ⏳ Failed to connect to Elasticsearch.")
+
     def index_image(self, image_data):
         try:
             res = self.es.index(index="screenshots", body=image_data)
             return res['result']
-        except Exception as e:
+        except (ConnectionError, TransportError) as e:
             print('Error while indexing:', e)
             return None
 
@@ -25,7 +37,7 @@ class SearchEngine:
                 }
             })
             return result
-        except Exception as e:
+        except (ConnectionError, TransportError) as e:
             print('Error while searching for images:', e)
             return None
 
@@ -34,5 +46,5 @@ class SearchEngine:
             self.es.delete(index="screenshots", id=image_id)
         except NotFoundError:
             print(f'Image with id {image_id} not found in index')
-        except Exception as e:
+        except (ConnectionError, TransportError) as e:
             print('Error while deleting image from index:', e)
