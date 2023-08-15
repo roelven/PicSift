@@ -1,23 +1,54 @@
-from elasticsearch import Elasticsearch, ConnectionError, NotFoundError, TransportError
+from elasticsearch import Elasticsearch, ConnectionError, NotFoundError, TransportError, exceptions
 import os
+import logging
+
+#
+## SET NUMBER OF REPLICAS AND ASSIGN SHARD:
+# 
+# curl -X PUT "localhost:9200/screenshots" -H 'Content-Type: application/json' -d'
+# {
+#   "settings" : {
+#       "number_of_replicas" : 0,
+#       "number_of_shards" : 1
+#   }
+# }'
+
+# 
+## VERIFY IF INDICES HAVE BEEN CREATED:
+#
+# curl -X GET "localhost:9200/_cat/indices?v"
+#
+
+logging.basicConfig(level=logging.INFO)
 
 class SearchEngine:
     def __init__(self):
+        self.es = None
         host = os.getenv('ES_URI')
         port = os.getenv('ES_PORT')
-        self.es = Elasticsearch([f'http://{host}:{port}'])
+        
+        try:
+            temp_es = Elasticsearch([f'http://{host}:{port}'])
+            # A simple ping to see if it's available
+            if temp_es.info():
+                self.es = temp_es
+            else:
+                print(f"   ⚠️ Elasticsearch at {host}:{port} did not respond to ping. ")
+        except exceptions.ConnectionError:
+            print(f"   ⚠️ Failed to connect to Elasticsearch at {host}:{port}.")
+        except Exception as e:
+            print(f"   ⚠️ An error occurred while trying to connect to Elasticsearch: {e}")
 
-        print(f'   ⏳ Initializing ES client to connect to http://{host}:{port}...')
-
-        if not self.es.ping():
-            raise ValueError("   ⚠️ Elasticsearch is not reachable at the provided URI and port. ")
-
-        # Check Elasticsearch health
-        health = self.es.cluster.health()
-        if health['status'] in ['yellow', 'green']:
-            print("   ⏳ Connected to Elasticsearch successfully!")
-        else:
-            print("   ⏳ Failed to connect to Elasticsearch.")
+        # Check Elasticsearch health, if we have a valid connection
+        if self.es:
+            try:
+                health = self.es.cluster.health()
+                if health['status'] in ['yellow', 'green']:
+                    print("   ⏳ Connected to Elasticsearch successfully!")
+                else:
+                    print("   ⏳ Elasticsearch is running but cluster health is not optimal.")
+            except Exception as e:
+                print(f"   ⚠️ An error occurred while checking Elasticsearch health: {e}")
 
     def index_image(self, image_data):
         try:

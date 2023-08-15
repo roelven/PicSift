@@ -15,7 +15,7 @@ auth = HTTPBasicAuth()
 # Initialize database manager and search engine
 print(" 👉 Initializing SearchEngine ...")
 search_engine = SearchEngine()
-print(" 👉 DatabaseManager ...")
+print(" 👉 DatabaseManager ... ")
 db_manager = DatabaseManager()
 
 users = {

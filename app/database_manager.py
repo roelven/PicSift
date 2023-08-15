@@ -15,7 +15,7 @@ class DatabaseManager:
         try:
             # The ismaster command is cheap and does not require auth.
             self.client.admin.command('ismaster')
-            print("   ⏳ Connected to MongoDB successfully! ")
+            print("   👍 Connected to MongoDB successfully!")
         except Exception as e:
             raise ValueError("   ⚠️ Failed to connect to MongoDB:", e)        
 

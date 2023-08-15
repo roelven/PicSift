@@ -17,7 +17,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Install Tesseract
 RUN apt-get update \
     && apt-get install -y \
-    netcat-traditional \
+    jq \
+    curl \
     tesseract-ocr \
     tesseract-ocr-eng \
     tesseract-ocr-deu \
@@ -29,6 +30,7 @@ RUN apt-get update \
 # after the installation of dependencies, which means Docker can use its cache
 # during the building process if the dependencies haven't changed.
 COPY ./app /app
+RUN chmod +x /app/wait-for-elasticsearch.sh
 
 # Expose port 5000 in the Docker container. This is the default port on which
 # Flask applications run.
@@ -40,4 +42,5 @@ ENV FLASK_APP=main.py
 
 # Run the application. If you have an entry point defined in your setup.py file,
 # Docker will run this by default. Otherwise, it will look for the `app.py` file.
-CMD ["python", "main.py"]
+CMD ["/app/wait-for-elasticsearch.sh", "http://elasticsearch:9200", "--", "python", "main.py"]
+
